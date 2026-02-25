@@ -8,6 +8,7 @@ import { FallingPapers } from "./falling-papers"
 import { GrainOverlay } from "./grain-overlay"
 import { useColorSplash } from "./color-splash"
 import { AutoGulalBursts } from "./auto-gulal-bursts"
+import * as htmlToImage from 'html-to-image';
 
 type Phase = "intro" | "input" | "wish"
 
@@ -369,69 +370,74 @@ ${selectedWish}
     triggerConfetti()
   }
 
+  // --- 1. Screenshot Function (Fixed) ---
   const handleScreenshot = async () => {
-    if (!wishCardRef.current) return
+    if (!wishCardRef.current) return;
+
     try {
-      const { default: html2canvas } = await import("html2canvas")
-      const canvas = await html2canvas(wishCardRef.current, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        logging: false,
-      })
-      const link = document.createElement("a")
-      link.download = `holi-wish-${name || "holi"}.png`
-      link.href = canvas.toDataURL("image/png")
-      link.click()
+      // html-to-image library ko dynamically import karein (ya top par import karein)
+      const { toPng } = await import("html-to-image");
+
+      const dataUrl = await toPng(wishCardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff', // Card ke peeche white background rakhega
+      });
+
+      // LocalStorage mein save karein (jaise aapne pehle kiya tha)
+      localStorage.setItem("holiScreenshot", dataUrl);
+
+      const link = document.createElement("a");
+      link.download = `holi-wish-${name || "holi"}.png`;
+      link.href = dataUrl;
+      link.click();
     } catch (err) {
-      console.error("Screenshot failed:", err)
+      console.error("Screenshot failed:", err);
+      alert("Screenshot lene mein dikkaat aayi. Please refresh karke try karein.");
     }
-  }
+  };
 
+  // --- 2. WhatsApp Share Function (Fixed) ---
   const handleWhatsAppShare = async () => {
-    if (!name.trim() || !selectedWish) return
+    // 1. Validation check
+    if (!name.trim() || !selectedWish || !wishCardRef.current) return;
 
-    const plainText = `Happy Holi\n\nDear, ${name}.\n\n${selectedWish}\n\n— Chinmaya`
+    // Plain text ko yahan define karein taaki fallback mein use ho sake
+    const plainText = `Happy Holi ✨\n\nDear, ${name}.\n\n${selectedWish}\n\n— Chinmaya`;
 
-    // Try using the Web Share API with image on supported mobile browsers (can include WhatsApp)
     try {
-      const navAny = navigator as any
-      if (wishCardRef.current && navAny?.canShare) {
-        const { default: html2canvas } = await import("html2canvas")
-        const canvas = await html2canvas(wishCardRef.current, {
-          backgroundColor: null,
-          scale: 2,
-          useCORS: true,
-          logging: false,
-        })
+      const { toBlob } = await import("html-to-image");
+      
+      // 2. Image generate karein (Background color zaroori hai white ke liye)
+      const blob = await toBlob(wishCardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+      });
 
-        const blob: Blob | null = await new Promise((resolve) =>
-          canvas.toBlob((b) => resolve(b), "image/png", 0.95)
-        )
+      if (blob && navigator.canShare) {
+        const file = new File([blob], `holi-wish.png`, { type: "image/png" });
 
-        if (blob) {
-          const file = new File([blob], `holi-wish-${name || "holi"}.png`, {
-            type: "image/png",
-          })
-
-          if (navAny.canShare({ files: [file] })) {
-            await navAny.share({
-              text: plainText,
-              files: [file],
-            })
-            return
-          }
+        // 3. Web Share API (Priority: Only File)
+        // Kuch browsers text+file handle nahi karte, isliye sirf file bhej rahe hain
+        // WhatsApp mobile par image share karne ke baad caption khud likhne ka option deta hai
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Happy Holi',
+          });
+          return; // Image share ho gayi!
         }
       }
     } catch (err) {
-      console.error("WhatsApp image share failed, falling back to text:", err)
+      console.error("Image sharing failed:", err);
     }
 
-    // Fallback: text-only share via WhatsApp link
-    const encoded = encodeURIComponent(plainText)
-    window.open(`https://wa.me/?text=${encoded}`, "_blank")
-  }
-
+    // 4. Fallback: Agar Mobile Share fail ho jaye (Desktop ya purana phone)
+    // Yahan 'plainText' defined hai, isliye underline nahi aayega
+    const encoded = encodeURIComponent(plainText);
+    window.open(`https://wa.me/?text=${encoded}`, "_blank");
+  };
   const toggleMusic = () => {
     if (!audioRef.current) return
     if (musicPlaying) {
