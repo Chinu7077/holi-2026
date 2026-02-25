@@ -1,16 +1,30 @@
-"use client"
+"use client";
 
-import { useState, useRef, useCallback, useEffect } from "react"
-import { Volume2, VolumeX, Camera, Info, X, MessageCircle, Hand, Smartphone, Download, Share2, Check, ChevronUp, ChevronDown } from "lucide-react"
-import { BackgroundParticles } from "./background-particles"
-import { FloatingPetals } from "./floating-petals"
-import { FallingPapers } from "./falling-papers"
-import { GrainOverlay } from "./grain-overlay"
-import { useColorSplash } from "./color-splash"
-import { AutoGulalBursts } from "./auto-gulal-bursts"
-import * as htmlToImage from 'html-to-image';
+import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  Volume2,
+  VolumeX,
+  Camera,
+  Info,
+  X,
+  MessageCircle,
+  Hand,
+  Smartphone,
+  Download,
+  Share2,
+  Check,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
+import { BackgroundParticles } from "./background-particles";
+import { FloatingPetals } from "./floating-petals";
+import { FallingPapers } from "./falling-papers";
+import { GrainOverlay } from "./grain-overlay";
+import { useColorSplash } from "./color-splash";
+import { AutoGulalBursts } from "./auto-gulal-bursts";
+import * as htmlToImage from "html-to-image";
 
-type Phase = "intro" | "input" | "wish"
+type Phase = "intro" | "input" | "wish";
 
 const WISH_TEMPLATES: string[] = [
   "May this Holi gently color your days with peace and simple joy.\n\nMay each moment ahead feel a little lighter, a little kinder, and full of quiet hope.",
@@ -64,311 +78,332 @@ const WISH_TEMPLATES: string[] = [
   "May Holi fill your heart with gratitude for how far you’ve already come.\n\nMay you honor your journey, your resilience, and the quiet strength within you.",
   "May the colors of Holi dance softly around your worries and turn them into lessons.\n\nMay you walk away from this season with more peace and more wisdom.",
   "May this Holi surround you with people who add light to your life.\n\nMay their presence, words, and wishes make you feel deeply cherished.",
-]
+];
 
 export function HoliApp() {
-  const [phase, setPhase] = useState<Phase>("intro")
-  const [isColorful, setIsColorful] = useState(false)
-  const [name, setName] = useState("")
-  const [showWish, setShowWish] = useState(false)
-  const [typedText, setTypedText] = useState("")
-  const [showInstructions, setShowInstructions] = useState(false)
-  const [musicPlaying, setMusicPlaying] = useState(false)
-  const [nameVisible, setNameVisible] = useState(false)
-  const [paperBurst, setPaperBurst] = useState(0)
-  const [paperShake, setPaperShake] = useState(0)
+  const [phase, setPhase] = useState<Phase>("intro");
+  const [isColorful, setIsColorful] = useState(false);
+  const [name, setName] = useState("");
+  const [showWish, setShowWish] = useState(false);
+  const [typedText, setTypedText] = useState("");
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [nameVisible, setNameVisible] = useState(false);
+  const [paperBurst, setPaperBurst] = useState(0);
+  const [paperShake, setPaperShake] = useState(0);
 
   // Swipe reveal state
-  const [revealPercent, setRevealPercent] = useState(0) // 0 = fully grayscale, 100 = fully colorful
-  const [isRevealed, setIsRevealed] = useState(false) // locked in after full swipe
-  const touchStartYRef = useRef<number | null>(null)
-  const revealAtStartRef = useRef(0)
-  const isSwiping = useRef(false)
+  const [revealPercent, setRevealPercent] = useState(0); // 0 = fully grayscale, 100 = fully colorful
+  const [isRevealed, setIsRevealed] = useState(false); // locked in after full swipe
+  const touchStartYRef = useRef<number | null>(null);
+  const revealAtStartRef = useRef(0);
+  const isSwiping = useRef(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const wishCardRef = useRef<HTMLDivElement>(null)
-  const [selectedWish, setSelectedWish] = useState<string | null>(null)
-  const { triggerSplash, triggerConfetti } = useColorSplash()
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wishCardRef = useRef<HTMLDivElement>(null);
+  const [selectedWish, setSelectedWish] = useState<string | null>(null);
+  const { triggerSplash, triggerConfetti } = useColorSplash();
 
   // Initialize audio
   useEffect(() => {
-    const audio = new Audio("/holi.mp3")
-    audio.loop = true
-    audio.volume = 0.3
-    audioRef.current = audio
+    const audio = new Audio("/holi.mp3");
+    audio.loop = true;
+    audio.volume = 0.3;
+    audioRef.current = audio;
 
     return () => {
-      audio.pause()
-      audio.src = ""
-    }
-  }, [])
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
 
   // Shake detection
   useEffect(() => {
-    if (!isColorful) return
+    if (!isColorful) return;
 
-    let lastX = 0
-    let lastY = 0
-    let lastZ = 0
-    const threshold = 25
+    let lastX = 0;
+    let lastY = 0;
+    let lastZ = 0;
+    const threshold = 25;
 
     const handleMotion = (e: DeviceMotionEvent) => {
-      const acc = e.accelerationIncludingGravity
-      if (!acc || acc.x == null || acc.y == null || acc.z == null) return
+      const acc = e.accelerationIncludingGravity;
+      if (!acc || acc.x == null || acc.y == null || acc.z == null) return;
 
-      const deltaX = Math.abs(acc.x - lastX)
-      const deltaY = Math.abs(acc.y - lastY)
-      const deltaZ = Math.abs(acc.z - lastZ)
+      const deltaX = Math.abs(acc.x - lastX);
+      const deltaY = Math.abs(acc.y - lastY);
+      const deltaZ = Math.abs(acc.z - lastZ);
 
       if (deltaX + deltaY + deltaZ > threshold) {
-        const x = Math.random() * window.innerWidth
-        const y = Math.random() * window.innerHeight
-        triggerSplash(x, y, 60)
-        triggerConfetti()
-        setPaperShake((s) => s + 1)
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight;
+        triggerSplash(x, y, 60);
+        triggerConfetti();
+        setPaperShake((s) => s + 1);
       }
 
-      lastX = acc.x
-      lastY = acc.y
-      lastZ = acc.z
-    }
+      lastX = acc.x;
+      lastY = acc.y;
+      lastZ = acc.z;
+    };
 
-    window.addEventListener("devicemotion", handleMotion)
-    return () => window.removeEventListener("devicemotion", handleMotion)
-  }, [isColorful, triggerSplash, triggerConfetti])
+    window.addEventListener("devicemotion", handleMotion);
+    return () => window.removeEventListener("devicemotion", handleMotion);
+  }, [isColorful, triggerSplash, triggerConfetti]);
 
   // Typewriter effect for selected wish
   useEffect(() => {
-    if (!showWish || !name || !selectedWish) return
+    if (!showWish || !name || !selectedWish) return;
 
     const fullText = `Dear, ${name}.
 
 ${selectedWish}
 
-— Chinmaya`
+— Chinmaya`;
 
-    let i = 0
-    setTypedText("")
+    let i = 0;
+    setTypedText("");
 
     const interval = setInterval(() => {
       if (i < fullText.length) {
-        setTypedText(fullText.slice(0, i + 1))
-        i++
+        setTypedText(fullText.slice(0, i + 1));
+        i++;
       } else {
-        clearInterval(interval)
+        clearInterval(interval);
       }
-    }, 45)
+    }, 45);
 
-    return () => clearInterval(interval)
-  }, [showWish, name, selectedWish])
+    return () => clearInterval(interval);
+  }, [showWish, name, selectedWish]);
   // --- Swipe-up gesture handlers ---
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
-      if (isRevealed) return
-      const touch = e.touches[0]
-      touchStartYRef.current = touch.clientY
-      revealAtStartRef.current = revealPercent
-      isSwiping.current = true
-    },
-    [isRevealed, revealPercent]
-  )
+      // --- AUDIO UNLOCK TRICK ---
+      // Jaise hi user pehla touch karega, hum audio ko "wake up" kar denge
+      if (audioRef.current && audioRef.current.paused) {
+        audioRef.current
+          .play()
+          .then(() => {
+            // Bajne ki zaroorat nahi hai abhi, bas unlock karna tha
+            audioRef.current?.pause();
+          })
+          .catch(() => {
+            // Agar block ho jaye toh koi baat nahi, agle touch par try karenge
+          });
+      }
 
+      if (isRevealed) return;
+      const touch = e.touches[0];
+      touchStartYRef.current = touch.clientY;
+      revealAtStartRef.current = revealPercent;
+      isSwiping.current = true;
+    },
+    [isRevealed, revealPercent],
+  );
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (isRevealed || touchStartYRef.current === null || !isSwiping.current) return
-      const touch = e.touches[0]
-      const deltaY = touchStartYRef.current - touch.clientY // positive = swiping up
-      const screenH = window.innerHeight
-      const swipePercent = (deltaY / screenH) * 110 // tuned for smoother, more controlled reveal
-      const newPercent = Math.max(0, Math.min(100, revealAtStartRef.current + swipePercent))
-      setRevealPercent(newPercent)
+      if (isRevealed || touchStartYRef.current === null || !isSwiping.current)
+        return;
+      const touch = e.touches[0];
+      const deltaY = touchStartYRef.current - touch.clientY; // positive = swiping up
+      const screenH = window.innerHeight;
+      const swipePercent = (deltaY / screenH) * 110; // tuned for smoother, more controlled reveal
+      const newPercent = Math.max(
+        0,
+        Math.min(100, revealAtStartRef.current + swipePercent),
+      );
+      setRevealPercent(newPercent);
     },
-    [isRevealed]
-  )
+    [isRevealed],
+  );
 
   const handleTouchEnd = useCallback(() => {
-    if (isRevealed) return
-    isSwiping.current = false
-    touchStartYRef.current = null
+    if (isRevealed) return;
+    isSwiping.current = false;
+    touchStartYRef.current = null;
 
     // If swiped more than ~35%, auto-complete reveal (mobile-friendly snap)
     if (revealPercent >= 35) {
-      completeReveal()
+      completeReveal();
     } else {
       // Snap back to 0 with smooth animation
-      animateRevealTo(0)
+      animateRevealTo(0);
     }
-  }, [isRevealed, revealPercent])
+  }, [isRevealed, revealPercent]);
 
   // Mouse swipe for desktop
-  const mouseStartYRef = useRef<number | null>(null)
-  const isMouseDown = useRef(false)
+  const mouseStartYRef = useRef<number | null>(null);
+  const isMouseDown = useRef(false);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      if (isRevealed) return
-      mouseStartYRef.current = e.clientY
-      revealAtStartRef.current = revealPercent
-      isMouseDown.current = true
+      if (isRevealed) return;
+      mouseStartYRef.current = e.clientY;
+      revealAtStartRef.current = revealPercent;
+      isMouseDown.current = true;
     },
-    [isRevealed, revealPercent]
-  )
+    [isRevealed, revealPercent],
+  );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (isRevealed || !isMouseDown.current || mouseStartYRef.current === null) return
-      const deltaY = mouseStartYRef.current - e.clientY
-      const screenH = window.innerHeight
-      const swipePercent = (deltaY / screenH) * 110
-      const newPercent = Math.max(0, Math.min(100, revealAtStartRef.current + swipePercent))
-      setRevealPercent(newPercent)
+      if (isRevealed || !isMouseDown.current || mouseStartYRef.current === null)
+        return;
+      const deltaY = mouseStartYRef.current - e.clientY;
+      const screenH = window.innerHeight;
+      const swipePercent = (deltaY / screenH) * 110;
+      const newPercent = Math.max(
+        0,
+        Math.min(100, revealAtStartRef.current + swipePercent),
+      );
+      setRevealPercent(newPercent);
     },
-    [isRevealed]
-  )
+    [isRevealed],
+  );
 
   const handleMouseUp = useCallback(() => {
-    if (isRevealed || !isMouseDown.current) return
-    isMouseDown.current = false
-    mouseStartYRef.current = null
+    if (isRevealed || !isMouseDown.current) return;
+    isMouseDown.current = false;
+    mouseStartYRef.current = null;
 
     if (revealPercent >= 35) {
-      completeReveal()
+      completeReveal();
     } else {
-      animateRevealTo(0)
+      animateRevealTo(0);
     }
-  }, [isRevealed, revealPercent])
+  }, [isRevealed, revealPercent]);
 
   const animateRevealTo = (target: number) => {
-    const start = revealPercent
-    const diff = target - start
-    const duration = 400
-    const startTime = performance.now()
+    const start = revealPercent;
+    const diff = target - start;
+    const duration = 500;
+    const startTime = performance.now();
 
     const step = (now: number) => {
-      const elapsed = now - startTime
-      const progress = Math.min(elapsed / duration, 1)
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
       // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setRevealPercent(start + diff * eased)
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setRevealPercent(start + diff * eased);
       if (progress < 1) {
-        requestAnimationFrame(step)
+        requestAnimationFrame(step);
       }
-    }
-    requestAnimationFrame(step)
-  }
+    };
+    requestAnimationFrame(step);
+  };
 
   const completeReveal = () => {
     // Animate to 100%
-    const start = revealPercent
-    const diff = 100 - start
-    const duration = 500
-    const startTime = performance.now()
+    const start = revealPercent;
+    const diff = 100 - start;
+    const duration = 500;
+    const startTime = performance.now();
 
     const step = (now: number) => {
-      const elapsed = now - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      const current = start + diff * eased
-      setRevealPercent(current)
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = start + diff * eased;
+      setRevealPercent(current);
 
       if (progress >= 1) {
-        setRevealPercent(100)
-        setIsRevealed(true)
-        setIsColorful(true)
+        setRevealPercent(100);
+        setIsRevealed(true);
+        setIsColorful(true);
 
         // Trigger celebration effects
-        const cx = window.innerWidth / 2
-        const cy = window.innerHeight / 2
-        triggerSplash(cx, cy, 120)
-        triggerConfetti()
-        setPaperBurst((b) => b + 1)
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        triggerSplash(cx, cy, 120);
+        triggerConfetti();
+        setPaperBurst((b) => b + 1);
 
         // Auto play music
         if (audioRef.current) {
-          audioRef.current.play().catch(() => {})
-          setMusicPlaying(true)
+          audioRef.current.play().catch(() => {});
+          setMusicPlaying(true);
         }
         // Show name input
         setTimeout(() => {
-          setPhase("input")
-          setNameVisible(true)
-        }, 600)
+          setPhase("input");
+          setNameVisible(true);
+        }, 600);
       } else {
-        requestAnimationFrame(step)
+        requestAnimationFrame(step);
       }
-    }
-    requestAnimationFrame(step)
-  }
+    };
+    requestAnimationFrame(step);
+  };
   const resetToIntro = () => {
     // Smoothly animate back to grayscale
-    setIsRevealed(false)
-    setIsColorful(false)
-    setPhase("intro")
-    setShowWish(false)
-    setNameVisible(false)
-    setSelectedWish(null)
+    setIsRevealed(false);
+    setIsColorful(false);
+    setPhase("intro");
+    setShowWish(false);
+    setNameVisible(false);
+    setSelectedWish(null);
 
     if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
-    setMusicPlaying(false)
+    setMusicPlaying(false);
 
-    animateRevealTo(0)
-  }
+    animateRevealTo(0);
+  };
 
   // Desktop scroll (wheel) handler: scroll down reveals, scroll up can reset
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
-      const deltaY = e.deltaY
-      if (deltaY === 0) return
+      const deltaY = e.deltaY;
+      if (deltaY === 0) return;
 
       // If already fully revealed, allow upward scroll to reset
       if (isRevealed) {
         if (deltaY < -10) {
-          e.preventDefault()
-          resetToIntro()
+          e.preventDefault();
+          resetToIntro();
         }
-        return
+        return;
       }
 
-      e.preventDefault()
+      e.preventDefault();
 
-      const direction = deltaY > 0 ? 1 : -1
-      const step = Math.min(8, Math.max(2, Math.abs(deltaY) * 0.15))
-      const next = Math.max(0, Math.min(100, revealPercent + direction * step))
-      setRevealPercent(next)
+      const direction = deltaY > 0 ? 1 : -1;
+      const step = Math.min(8, Math.max(2, Math.abs(deltaY) * 0.15));
+      const next = Math.max(0, Math.min(100, revealPercent + direction * step));
+      setRevealPercent(next);
 
       if (next >= 35 && direction > 0) {
-        completeReveal()
+        completeReveal();
       } else if (next <= 2 && direction < 0) {
-        animateRevealTo(0)
+        animateRevealTo(0);
       }
     },
-    [isRevealed, revealPercent]
-  )
+    [isRevealed, revealPercent],
+  );
 
   const handlePlayHoli = () => {
     // Trigger color splash effects
-    const x = window.innerWidth / 2
-    const y = window.innerHeight / 2
-    triggerSplash(x, y, 120)
-    triggerConfetti()
-    setPaperBurst((b) => b + 1)
+    const x = window.innerWidth / 2;
+    const y = window.innerHeight / 2;
+    triggerSplash(x, y, 120);
+    triggerConfetti();
+    setPaperBurst((b) => b + 1);
 
     // Animate the swipe reveal to full
-    completeReveal()
-  }
+    completeReveal();
+  };
 
   const handleGenerateWish = () => {
-    if (!name.trim()) return
-    const randomIndex = Math.floor(Math.random() * WISH_TEMPLATES.length)
-    setSelectedWish(WISH_TEMPLATES[randomIndex])
-    setPhase("wish")
-    setShowWish(true)
-    triggerSplash(window.innerWidth / 2, window.innerHeight / 2, 80)
-    triggerConfetti()
-  }
+    if (!name.trim()) return;
+    const randomIndex = Math.floor(Math.random() * WISH_TEMPLATES.length);
+    setSelectedWish(WISH_TEMPLATES[randomIndex]);
+    setPhase("wish");
+    setShowWish(true);
+    triggerSplash(window.innerWidth / 2, window.innerHeight / 2, 80);
+    triggerConfetti();
+  };
 
   // --- 1. Screenshot Function (Fixed) ---
   const handleScreenshot = async () => {
@@ -381,7 +416,7 @@ ${selectedWish}
       const dataUrl = await toPng(wishCardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        backgroundColor: '#ffffff', // Card ke peeche white background rakhega
+        backgroundColor: "#ffffff", // Card ke peeche white background rakhega
       });
 
       // LocalStorage mein save karein (jaise aapne pehle kiya tha)
@@ -393,7 +428,9 @@ ${selectedWish}
       link.click();
     } catch (err) {
       console.error("Screenshot failed:", err);
-      alert("Screenshot lene mein dikkaat aayi. Please refresh karke try karein.");
+      alert(
+        "Screenshot lene mein dikkaat aayi. Please refresh karke try karein.",
+      );
     }
   };
 
@@ -407,12 +444,12 @@ ${selectedWish}
 
     try {
       const { toBlob } = await import("html-to-image");
-      
+
       // 2. Image generate karein (Background color zaroori hai white ke liye)
       const blob = await toBlob(wishCardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
       });
 
       if (blob && navigator.canShare) {
@@ -424,7 +461,7 @@ ${selectedWish}
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: 'Happy Holi',
+            title: "Happy Holi",
           });
           return; // Image share ho gayi!
         }
@@ -439,19 +476,19 @@ ${selectedWish}
     window.open(`https://wa.me/?text=${encoded}`, "_blank");
   };
   const toggleMusic = () => {
-    if (!audioRef.current) return
+    if (!audioRef.current) return;
     if (musicPlaying) {
-      audioRef.current.pause()
+      audioRef.current.pause();
     } else {
-      audioRef.current.play().catch(() => {})
+      audioRef.current.play().catch(() => {});
     }
-    setMusicPlaying(!musicPlaying)
-  }
+    setMusicPlaying(!musicPlaying);
+  };
 
   // The grayscale top layer clips from the top down.
   // revealPercent 0 = grayscale covers 100% of screen
   // revealPercent 100 = grayscale covers 0% (fully colorful)
-  const grayscaleClipTop = `${100 - revealPercent}%`
+  const grayscaleClipTop = `${100 - revealPercent}%`;
 
   return (
     <>
@@ -491,7 +528,11 @@ ${selectedWish}
         <BackgroundParticles isColorful={true} />
         {phase === "wish" && showWish && <AutoGulalBursts />}
         <FloatingPetals isColorful={true} />
-        <FallingPapers isColorful={true} burstSignal={paperBurst} shakeSignal={paperShake} />
+        <FallingPapers
+          isColorful={true}
+          burstSignal={paperBurst}
+          shakeSignal={paperShake}
+        />
         <GrainOverlay />
       </div>
 
@@ -545,9 +586,13 @@ ${selectedWish}
             zIndex: 2,
             bottom: `${revealPercent}%`,
             height: "4px",
-            background: "linear-gradient(90deg, #FF1493, #FFD700, #00CC66, #4169E1, #FF1493)",
-            boxShadow: "0 0 20px rgba(255, 20, 147, 0.6), 0 0 40px rgba(255, 215, 0, 0.4), 0 0 60px rgba(0, 204, 102, 0.3)",
-            transition: isSwiping.current ? "none" : "bottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+            background:
+              "linear-gradient(90deg, #FF1493, #FFD700, #00CC66, #4169E1, #FF1493)",
+            boxShadow:
+              "0 0 20px rgba(255, 20, 147, 0.6), 0 0 40px rgba(255, 215, 0, 0.4), 0 0 60px rgba(0, 204, 102, 0.3)",
+            transition: isSwiping.current
+              ? "none"
+              : "bottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
           }}
         />
       )}
@@ -585,10 +630,13 @@ ${selectedWish}
               <h1
                 className="text-5xl font-bold tracking-tight text-foreground md:text-7xl"
                 style={{
-                  textShadow: "0 0 40px rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.5)",
+                  textShadow:
+                    "0 0 40px rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.5)",
                 }}
               >
-                <span className="font-serif text-6xl md:text-8xl">Touch the Colors</span>
+                <span className="font-serif text-6xl md:text-8xl">
+                  Touch the Colors
+                </span>
               </h1>
               <div
                 className="mx-auto mt-2 h-0.5 w-32 rounded-full"
@@ -615,9 +663,10 @@ ${selectedWish}
               }}
             >
               <ChevronUp className="h-5 w-5 text-foreground" />
-              <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Swipe Up</span>
+              <span className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                Swipe Up
+              </span>
             </div>
-
           </div>
         )}
 
@@ -640,150 +689,152 @@ ${selectedWish}
                 boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
               }}
             >
-             <h2
-  className="font-serif text-3xl font-bold text-black"
-  style={{
-    textShadow: "2px 2px 0 rgba(255,255,255,0.4)",
-  }}
->
-  Happy Holi!
-</h2>
+              <h2
+                className="font-serif text-3xl font-bold text-black"
+                style={{
+                  textShadow: "2px 2px 0 rgba(255,255,255,0.4)",
+                }}
+              >
+                Happy Holi!
+              </h2>
               <p className="text-sm text-black">
-Enter your name to see your special wish
-</p>
+                Enter your name to see your special wish
+              </p>
 
-<div className="w-full">
-  <label htmlFor="name-input" className="sr-only">
-    Enter Your Name
-  </label>
+              <div className="w-full">
+                <label htmlFor="name-input" className="sr-only">
+                  Enter Your Name
+                </label>
 
-  <input
-    id="name-input"
-    type="text"
-    placeholder="Enter Your Name"
-    value={name}
-    onChange={(e) => setName(e.target.value)}
-    onKeyDown={(e) => e.key === "Enter" && handleGenerateWish()}
-    className="w-full rounded-xl px-5 py-3.5 text-center text-lg font-medium text-black placeholder:text-black/60 focus:outline-none"
-    style={{
-      background: "rgba(255, 255, 255, 0.6)",
-      border: "2px solid rgba(0, 0, 0, 0.1)",
-      animation: "border-glow 4s linear infinite",
-    }}
-    autoFocus
-    autoComplete="off"
-  />
-</div>
+                <input
+                  id="name-input"
+                  type="text"
+                  placeholder="Enter Your Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleGenerateWish()}
+                  className="w-full rounded-xl px-5 py-3.5 text-center text-lg font-medium text-black placeholder:text-black/60 focus:outline-none"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.6)",
+                    border: "2px solid rgba(0, 0, 0, 0.1)",
+                    animation: "border-glow 4s linear infinite",
+                  }}
+                  autoFocus
+                  autoComplete="off"
+                />
+              </div>
 
-<button
-  onClick={handleGenerateWish}
-  disabled={!name.trim()}
-  className="w-full rounded-xl px-6 py-3.5 text-lg font-semibold text-black transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100"
-  style={{
-    background: name.trim()
-      ? "linear-gradient(135deg, #FF1493, #FF6B35)"
-      : "rgba(255, 255, 255, 0.3)",
-    boxShadow: name.trim()
-      ? "0 4px 20px rgba(255, 20, 147, 0.4)"
-      : "none",
-    transition: "all 0.3s ease",
-  }}
->
-  Generate Wish
-</button>
+              <button
+                onClick={handleGenerateWish}
+                disabled={!name.trim()}
+                className="w-full rounded-xl px-6 py-3.5 text-lg font-semibold text-black transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100"
+                style={{
+                  background: name.trim()
+                    ? "linear-gradient(135deg, #FF1493, #FF6B35)"
+                    : "rgba(255, 255, 255, 0.3)",
+                  boxShadow: name.trim()
+                    ? "0 4px 20px rgba(255, 20, 147, 0.4)"
+                    : "none",
+                  transition: "all 0.3s ease",
+                }}
+              >
+                Generate Wish
+              </button>
             </div>
           </div>
         )}
 
-      {/* WISH PHASE */}
-{phase === "wish" && showWish && (
-  <div
-    className="mx-4 w-full max-w-sm pointer-events-auto"
-    style={{
-      animation: "floatSlow 8s ease-in-out infinite",
-    }}
-  >
-    <div
-      ref={wishCardRef}
-      className="relative flex flex-col items-center gap-2 rounded-3xl p-8 overflow-hidden"
-      style={{
-        border: "1px solid rgba(0, 0, 0, 0.1)",
-        boxShadow: "0 8px 30px rgba(0, 0, 0, 0.08)",
-        animation: "floatSlow 8s ease-in-out infinite",
-      }}
-    >
-      {/* 🔹 Light Blurred Background */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: "url('/images/holi-bSAg.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          filter: "blur(0.3px) brightness(1.05)",
-          transform: "scale(1.05)",
-        }}
-      />
+        {/* WISH PHASE */}
+        {phase === "wish" && showWish && (
+          <div
+            className="mx-4 w-full max-w-sm pointer-events-auto"
+            style={{
+              animation: "floatSlow 8s ease-in-out infinite",
+            }}
+          >
+            <div
+              ref={wishCardRef}
+              className="relative flex flex-col items-center gap-2 rounded-3xl p-8 overflow-hidden"
+              style={{
+                border: "1px solid rgba(0, 0, 0, 0.1)",
+                boxShadow: "0 8px 30px rgba(0, 0, 0, 0.08)",
+                animation: "floatSlow 8s ease-in-out infinite",
+              }}
+            >
+              {/* 🔹 Light Blurred Background */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: "url('/images/holi-bSAg.jpg')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  filter: "blur(0.3px) brightness(1.05)",
+                  transform: "scale(1.05)",
+                }}
+              />
 
-      {/* 🔹 Soft White Overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "rgba(255, 255, 255, 0.75)",
-        }}
-      />
+              {/* 🔹 Soft White Overlay */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "rgba(255, 255, 255, 0.75)",
+                }}
+              />
 
-      {/* 🔹 Content Layer */}
-      <div className="relative z-10 flex flex-col items-center gap-2 w-full">
+              {/* 🔹 Content Layer */}
+              <div className="relative z-10 flex flex-col items-center gap-3 w-full px-4">
+                <h2
+                  className="font-serif font-bold text-center mt-1 text-[clamp(30px,8vw,72px)] leading-tight"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #FF1493, #FFD700, #00CC66)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Happy Holi!
+                </h2>
 
-        <h2
-  className="font-serif text-7xl font-bold leading-[1.3] mt-1"
-  style={{
-    background: "linear-gradient(135deg, #FF1493, #FFD700, #00CC66)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
-  }}
->
-  Happy Holi!
-</h2>
-        <div className="mt-2 w-full text-center">
-          <p
-  className="whitespace-pre-line text-lg leading-8 text-black text-left"
-  style={{
-    fontFamily: "'Georgia', serif",
-  }}
->
-            {typedText}
-           <span
-  className="ml-1 inline-block w-[2px] bg-black"
-  style={{
-    height: "0.6em",
-    verticalAlign: "middle",
-    animation: typedText.includes("Chinmaya")
-      ? "none"
-      : "blink 1s steps(2, start) infinite",
-    opacity: typedText.includes("Chinmaya") ? 0 : 1,
-  }}
-/>
-          </p>
-        </div>
+                <div className="mt-3 w-full">
+                  <p
+                    className="whitespace-pre-line text-black text-left break-words"
+                    style={{
+                      fontFamily: "'Georgia', serif",
+                      fontSize: "clamp(14px, 3.5vw, 18px)",
+                      lineHeight: "1.7",
+                    }}
+                  >
+                    {typedText}
+                    <span
+                      className="ml-1 inline-block w-[2px] bg-black"
+                      style={{
+                        height: "0.8em",
+                        verticalAlign: "middle",
+                        animation: typedText.includes("Chinmaya")
+                          ? "none"
+                          : "blink 1s steps(2, start) infinite",
+                        opacity: typedText.includes("Chinmaya") ? 0 : 1,
+                      }}
+                    />
+                  </p>
+                </div>
 
-        <div
-          className="mt-4 h-px w-full"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(0,0,0,0.2), transparent)",
-          }}
-        />
+                <div
+                  className="mt-4 h-px w-full"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(0,0,0,0.2), transparent)",
+                  }}
+                />
 
-        <p className="text-xs tracking-wider text-black/60">
-          Happy Holi 2026
-        </p>
-
-      </div>
-    </div>
-  </div>
-)}
+                <p className="text-xs tracking-wider text-black/60">
+                  Happy Holi 2026
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ===== FLOATING UI BUTTONS (outside main, always on top) ===== */}
@@ -823,40 +874,42 @@ Enter your name to see your special wish
           }}
           aria-label="Take screenshot"
         >
-          <Camera className="h-6 w-6" />
+          <Download className="h-6 w-6" />
         </button>
       )}
 
-     {/* TOP RIGHT - Music Toggle */}
-{isColorful && (
-  <button
-    onClick={toggleMusic}
-    className="fixed right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full text-foreground transition-all duration-300 hover:scale-110"
-    style={{
-      zIndex: 9999,
-      background: musicPlaying
-        ? "rgba(255, 20, 147, 0.2)"
-        : "rgba(255, 255, 255, 0.1)",
-      backdropFilter: "blur(10px)",
-      border: musicPlaying
-        ? "1px solid rgba(255, 20, 147, 0.3)"
-        : "1px solid rgba(255, 255, 255, 0.15)",
-      boxShadow: musicPlaying
-        ? "0 0 16px rgba(255, 20, 147, 0.3), 0 0 32px rgba(255, 20, 147, 0.15)"
-        : "none",
-      marginRight: "env(safe-area-inset-right)",
-      marginTop: "env(safe-area-inset-top)",
-      animation: musicPlaying ? "pulse-glow 2s ease-in-out infinite" : "none",
-    }}
-    aria-label={musicPlaying ? "Mute music" : "Unmute music"}
-  >
-    {musicPlaying ? (
-      <Volume2 className="h-4.5 w-4.5" />
-    ) : (
-      <VolumeX className="h-4.5 w-4.5" />
-    )}
-  </button>
-)}
+      {/* TOP RIGHT - Music Toggle */}
+      {isColorful && (
+        <button
+          onClick={toggleMusic}
+          className="fixed right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full text-foreground transition-all duration-300 hover:scale-110"
+          style={{
+            zIndex: 9999,
+            background: musicPlaying
+              ? "rgba(255, 20, 147, 0.2)"
+              : "rgba(255, 255, 255, 0.1)",
+            backdropFilter: "blur(10px)",
+            border: musicPlaying
+              ? "1px solid rgba(255, 20, 147, 0.3)"
+              : "1px solid rgba(255, 255, 255, 0.15)",
+            boxShadow: musicPlaying
+              ? "0 0 16px rgba(255, 20, 147, 0.3), 0 0 32px rgba(255, 20, 147, 0.15)"
+              : "none",
+            marginRight: "env(safe-area-inset-right)",
+            marginTop: "env(safe-area-inset-top)",
+            animation: musicPlaying
+              ? "pulse-glow 2s ease-in-out infinite"
+              : "none",
+          }}
+          aria-label={musicPlaying ? "Mute music" : "Unmute music"}
+        >
+          {musicPlaying ? (
+            <Volume2 className="h-4.5 w-4.5" />
+          ) : (
+            <VolumeX className="h-4.5 w-4.5" />
+          )}
+        </button>
+      )}
 
       {/* TOP CENTER - Up/Down arrow for smooth transition */}
       <div
@@ -867,16 +920,22 @@ Enter your name to see your special wish
           type="button"
           onClick={() => {
             if (isRevealed) {
-              resetToIntro()
+              resetToIntro();
             } else {
-              completeReveal()
+              completeReveal();
             }
           }}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-foreground border border-white/25 backdrop-blur-md transition-transform duration-200 hover:scale-110 active:scale-95"
           style={{ pointerEvents: "auto" }}
-          aria-label={isRevealed ? "Scroll up to intro" : "Scroll down to colors"}
+          aria-label={
+            isRevealed ? "Scroll up to intro" : "Scroll down to colors"
+          }
         >
-          {isRevealed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          {isRevealed ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronUp className="h-4 w-4" />
+          )}
         </button>
       </div>
 
@@ -896,7 +955,11 @@ Enter your name to see your special wish
         }}
         aria-label="Show instructions"
       >
-        {showInstructions ? <X className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+        {showInstructions ? (
+          <X className="h-4 w-4" />
+        ) : (
+          <Info className="h-4 w-4" />
+        )}
       </button>
 
       {/* INSTRUCTION PANEL - slides down from top-left */}
@@ -921,7 +984,9 @@ Enter your name to see your special wish
             boxShadow: "0 16px 48px rgba(0, 0, 0, 0.4)",
           }}
         >
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Instruction</p>
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Instruction
+          </p>
 
           <div className="flex flex-col gap-2">
             {[
@@ -966,10 +1031,17 @@ Enter your name to see your special wish
                   {item.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium leading-none text-foreground">{item.label}</p>
-                  <p className="mt-0.5 text-[10px] leading-none text-muted-foreground">{item.desc}</p>
+                  <p className="text-[12px] font-medium leading-none text-foreground">
+                    {item.label}
+                  </p>
+                  <p className="mt-0.5 text-[10px] leading-none text-muted-foreground">
+                    {item.desc}
+                  </p>
                 </div>
-                <Check className="h-3 w-3 shrink-0 text-muted-foreground" style={{ opacity: 0.35 }} />
+                <Check
+                  className="h-3 w-3 shrink-0 text-muted-foreground"
+                  style={{ opacity: 0.35 }}
+                />
               </div>
             ))}
           </div>
@@ -977,11 +1049,14 @@ Enter your name to see your special wish
       </div>
 
       {/* Global footer credit */}
-      <div className="fixed inset-x-0 bottom-3 flex justify-center pointer-events-none" style={{ zIndex: 9 }}>
+      <div
+        className="fixed inset-x-0 bottom-3 flex justify-center pointer-events-none"
+        style={{ zIndex: 9 }}
+      >
         <p className="text-[11px] tracking-wide text-muted-foreground">
           Created by Chinmaya
         </p>
       </div>
     </>
-  )
+  );
 }
