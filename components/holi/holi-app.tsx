@@ -1,14 +1,13 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
-import { Volume2, VolumeX, Camera, Info, X, MessageCircle, Hand, Smartphone, Download, Share2, Check, ChevronUp } from "lucide-react"
+import { Volume2, VolumeX, Camera, Info, X, MessageCircle, Hand, Smartphone, Download, Share2, Check, ChevronUp, ChevronDown } from "lucide-react"
 import { BackgroundParticles } from "./background-particles"
 import { FloatingPetals } from "./floating-petals"
 import { FallingPapers } from "./falling-papers"
 import { GrainOverlay } from "./grain-overlay"
 import { useColorSplash } from "./color-splash"
 import { AutoGulalBursts } from "./auto-gulal-bursts"
-import html2canvas from "html2canvas"
 
 type Phase = "intro" | "input" | "wish"
 
@@ -299,22 +298,47 @@ ${selectedWish}
     }
     requestAnimationFrame(step)
   }
+  const resetToIntro = () => {
+    // Smoothly animate back to grayscale
+    setIsRevealed(false)
+    setIsColorful(false)
+    setPhase("intro")
+    setShowWish(false)
+    setNameVisible(false)
+    setSelectedWish(null)
 
-  // Desktop scroll (wheel) handler: scroll down reveals, scroll up hides
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+    setMusicPlaying(false)
+
+    animateRevealTo(0)
+  }
+
+  // Desktop scroll (wheel) handler: scroll down reveals, scroll up can reset
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
-      if (isRevealed) return
-      e.preventDefault()
-
       const deltaY = e.deltaY
       if (deltaY === 0) return
 
+      // If already fully revealed, allow upward scroll to reset
+      if (isRevealed) {
+        if (deltaY < -10) {
+          e.preventDefault()
+          resetToIntro()
+        }
+        return
+      }
+
+      e.preventDefault()
+
       const direction = deltaY > 0 ? 1 : -1
-      const step = Math.min(12, Math.max(4, Math.abs(deltaY) * 0.25))
+      const step = Math.min(8, Math.max(2, Math.abs(deltaY) * 0.15))
       const next = Math.max(0, Math.min(100, revealPercent + direction * step))
       setRevealPercent(next)
 
-      if (next >= 35) {
+      if (next >= 35 && direction > 0) {
         completeReveal()
       } else if (next <= 2 && direction < 0) {
         animateRevealTo(0)
@@ -348,6 +372,7 @@ ${selectedWish}
   const handleScreenshot = async () => {
     if (!wishCardRef.current) return
     try {
+      const { default: html2canvas } = await import("html2canvas")
       const canvas = await html2canvas(wishCardRef.current, {
         backgroundColor: null,
         scale: 2,
@@ -355,7 +380,7 @@ ${selectedWish}
         logging: false,
       })
       const link = document.createElement("a")
-      link.download = `holi-wish-${name}.png`
+      link.download = `holi-wish-${name || "holi"}.png`
       link.href = canvas.toDataURL("image/png")
       link.click()
     } catch (err) {
@@ -363,12 +388,48 @@ ${selectedWish}
     }
   }
 
-  const handleWhatsAppShare = () => {
+  const handleWhatsAppShare = async () => {
     if (!name.trim() || !selectedWish) return
-    const message = encodeURIComponent(
-      `Happy Holi\n\nDear, ${name}.\n\n${selectedWish}\n\n— Chinmaya`
-    )
-    window.open(`https://wa.me/?text=${message}`, "_blank")
+
+    const plainText = `Happy Holi\n\nDear, ${name}.\n\n${selectedWish}\n\n— Chinmaya`
+
+    // Try using the Web Share API with image on supported mobile browsers (can include WhatsApp)
+    try {
+      const navAny = navigator as any
+      if (wishCardRef.current && navAny?.canShare) {
+        const { default: html2canvas } = await import("html2canvas")
+        const canvas = await html2canvas(wishCardRef.current, {
+          backgroundColor: null,
+          scale: 2,
+          useCORS: true,
+          logging: false,
+        })
+
+        const blob: Blob | null = await new Promise((resolve) =>
+          canvas.toBlob((b) => resolve(b), "image/png", 0.95)
+        )
+
+        if (blob) {
+          const file = new File([blob], `holi-wish-${name || "holi"}.png`, {
+            type: "image/png",
+          })
+
+          if (navAny.canShare({ files: [file] })) {
+            await navAny.share({
+              text: plainText,
+              files: [file],
+            })
+            return
+          }
+        }
+      }
+    } catch (err) {
+      console.error("WhatsApp image share failed, falling back to text:", err)
+    }
+
+    // Fallback: text-only share via WhatsApp link
+    const encoded = encodeURIComponent(plainText)
+    window.open(`https://wa.me/?text=${encoded}`, "_blank")
   }
 
   const toggleMusic = () => {
@@ -790,6 +851,28 @@ Enter your name to see your special wish
     )}
   </button>
 )}
+
+      {/* TOP CENTER - Up/Down arrow for smooth transition */}
+      <div
+        className="fixed inset-x-0 top-4 flex justify-center"
+        style={{ zIndex: 11, pointerEvents: "none" }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            if (isRevealed) {
+              resetToIntro()
+            } else {
+              completeReveal()
+            }
+          }}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-foreground border border-white/25 backdrop-blur-md transition-transform duration-200 hover:scale-110 active:scale-95"
+          style={{ pointerEvents: "auto" }}
+          aria-label={isRevealed ? "Scroll up to intro" : "Scroll down to colors"}
+        >
+          {isRevealed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+        </button>
+      </div>
 
       {/* TOP LEFT - Info Button */}
       <button
