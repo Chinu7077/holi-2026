@@ -19,23 +19,10 @@ export const metadata: Metadata = {
   title: 'Happy Holi 2026 - Interactive Celebration',
   description: 'An immersive, interactive Holi celebration experience. Touch the colors and play Holi!',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/favicon.png',
+    apple: '/favicon.png',
   },
-}
+};
 
 export const viewport: Viewport = {
   themeColor: '#000000',
@@ -43,7 +30,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-}
+};
 
 export default function RootLayout({
   children,
