@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     siteName: 'Holi With Chinu',
     images: [
       {
-        url: 'https://holiwithchinu.vercel.app/og-image.jpg',
+        url: 'https://holiwithchinu.vercel.app/ogimage.jpg',
         width: 1200,
         height: 630,
       },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Holi With Chinu 2026 🎨',
     description: 'Celebrate Holi with colors, music & interactive magic by Chinu ✨',
-    images: ['https://holiwithchinu.vercel.app/og-image.jpg'],
+    images: ['https://holiwithchinu.vercel.app/ogimage.jpg'],
   },
 };
 
