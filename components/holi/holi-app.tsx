@@ -854,7 +854,7 @@ ${selectedWish}
           }}
           aria-label="Share on WhatsApp"
         >
-          <MessageCircle className="h-6 w-6" />
+         <Share2 className="h-6 w-6" />
         </button>
       )}
 

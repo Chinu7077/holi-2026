@@ -16,11 +16,35 @@ const dancingScript = Dancing_Script({
 });
 
 export const metadata: Metadata = {
-  title: 'Happy Holi 2026 - Interactive Celebration',
-  description: 'An immersive, interactive Holi celebration experience. Touch the colors and play Holi!',
+  title: 'Holi With Chinu 2026 🎨',
+  description: 'Celebrate Holi with colors, music & interactive magic by Chinu ✨',
+
   icons: {
     icon: '/favicon.png',
     apple: '/favicon.png',
+  },
+
+  openGraph: {
+    title: 'Holi With Chinu 2026 🎨',
+    description: 'Celebrate Holi with colors, music & interactive magic by Chinu ✨',
+    url: 'https://holiwithchinu.vercel.app/',
+    siteName: 'Holi With Chinu',
+    images: [
+      {
+        url: 'https://holiwithchinu.vercel.app/og-image.jpg',
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_IN',
+    type: 'website',
+  },
+
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Holi With Chinu 2026 🎨',
+    description: 'Celebrate Holi with colors, music & interactive magic by Chinu ✨',
+    images: ['https://holiwithchinu.vercel.app/og-image.jpg'],
   },
 };
 
