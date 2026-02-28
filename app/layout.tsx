@@ -1,33 +1,34 @@
-import type { Metadata, Viewport } from 'next'
-import { Poppins } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
+import type { Metadata, Viewport } from "next";
+import { Poppins } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import "./globals.css";
 
-const poppins = Poppins({ 
-  subsets: ["latin"], 
+const poppins = Poppins({
+  subsets: ["latin"],
   weight: ["400", "600"],
-  variable: "--font-sans"
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
-  title: 'Happy Holi 2026 - Interactive Celebration',
-  description: 'An immersive, interactive Holi celebration experience. Touch the colors and play Holi!',
+  title: "Happy Holi 2026 ",
+  description:
+    "Dive into colors, feel the rhythm, and celebrate Holi in an interactive festive experience.",
   icons: {
-    icon: '/favicon.png',
-    apple: '/favicon.png',
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
-  width: 'device-width',
+  themeColor: "#000000",
+  width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
@@ -36,5 +37,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  )
+  );
 }
