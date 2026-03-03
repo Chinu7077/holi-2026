@@ -12,7 +12,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Happy Holi 2026 ",
   description:
-    "Dive into colors, feel the rhythm, and celebrate Holi in an interactive festive experience.",
+    "You’ve never received a Holi wish like this.",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
